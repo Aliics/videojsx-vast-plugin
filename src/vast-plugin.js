@@ -32,7 +32,13 @@ export default class VastPlugin extends Plugin {
     this.domElements = {};
 
     player.one('play', () => {
-      this._getVastContent(options.url);
+      console.log('play');
+
+        if (options.url !== undefined) {
+            this._getVastContent(options.url)
+        } else if (options.vast !== undefined) {
+            this._handleVast(options.vast, options);
+        }
     });
 
     player.on('contentchanged', () => {
@@ -51,55 +57,63 @@ export default class VastPlugin extends Plugin {
 
   }
 
-  _getVastContent(url) {
-    const options = this.options;
-    this.vastClient.get(url, {withCredentials: options.withCredentials, wrapperLimit: options.wrapperLimit})
-      .then(res => {
+  _handleVast(res, options) {
+      console.log('handle vast')
 
-        const linearFn = creative => creative.type === 'linear';
-        const companionFn = creative => creative.type === 'companion';
+      const linearFn = creative => creative.type === 'linear';
+      const companionFn = creative => creative.type === 'companion';
+      console.log(res)
+      const adWithLinear = res.ads.find(ad => ad.creatives.some(linearFn));
 
-        const adWithLinear = res.ads.find(ad => ad.creatives.some(linearFn));
+      const linearCreative = adWithLinear.creatives.find(linearFn);
+      console.log("linear: ", linearCreative )
+      const companionCreative = adWithLinear.creatives.find(companionFn);
 
-        const linearCreative = adWithLinear.creatives.find(linearFn);
-
-        const companionCreative = adWithLinear.creatives.find(companionFn);
-
-        if (options.companion) {
+      if (options.companion) {
           const variation = companionCreative.variations.find(v => v.width === String(options.companion.maxWidth) && v.height === String(options.companion.maxHeight));
           if (variation) {
-            if (variation.staticResource) {
-              if (variation.type.indexOf("image") === 0) {
-                const clickThroughUrl = variation.companionClickThroughURLTemplate;
-                const dest = document.getElementById(options.companion.elementId);
-                let html;
-                if (clickThroughUrl) {
-                  html = `<a href="${clickThroughUrl}" target="_blank"><img src="${variation.staticResource}"/></a>`
-                } else {
-                  html = `<img src="${variation.staticResource}"/>`;
-                }
-                dest.innerHTML = html;
-              } else if (["application/x-javascript", "text/javascript", "application/javascript"].indexOf(variation.type) > -1) {
-                // handle script
-              } else if (variation.type === "application/x-shockwave-flash") {
-                // handle flash
+              if (variation.staticResource) {
+                  if (variation.type.indexOf("image") === 0) {
+                      const clickThroughUrl = variation.companionClickThroughURLTemplate;
+                      const dest = document.getElementById(options.companion.elementId);
+                      let html;
+                      if (clickThroughUrl) {
+                          html = `<a href="${clickThroughUrl}" target="_blank"><img src="${variation.staticResource}"/></a>`
+                      } else {
+                          html = `<img src="${variation.staticResource}"/>`;
+                      }
+                      dest.innerHTML = html;
+                  } else if (["application/x-javascript", "text/javascript", "application/javascript"].indexOf(variation.type) > -1) {
+                      // handle script
+                  } else if (variation.type === "application/x-shockwave-flash") {
+                      // handle flash
+                  }
               }
-            }
           }
-        }
+      }
 
-        // console.log("RESULT: " + JSON.stringify(companionCreative));
+      // console.log("RESULT: " + JSON.stringify(companionCreative));
 
-        this.sources = createSourceObjects(linearCreative.mediaFiles);
+      this.sources = createSourceObjects(linearCreative.mediaFiles);
 
-        this.tracker = new VASTTracker(this.vastClient, adWithLinear, linearCreative, companionCreative);
+      this.tracker = new VASTTracker(this.vastClient, adWithLinear, linearCreative, companionCreative);
 
-        if (this.sources.length) {
+      console.log(this.sources)
+
+      if (this.sources.length) {
           this.player.trigger('adsready');
-        }
-        else {
+      }
+      else {
           this.player.trigger('adscanceled');
-        }
+      }
+  }
+
+  _getVastContent(url) {
+    const options = this.options;
+    //This is doing more work than new VASTParser().parseVAST(xmlDoc).
+    this.vastClient.get(url, {withCredentials: options.withCredentials, wrapperLimit: options.wrapperLimit})
+      .then(res => {
+            this._handleVast(res, options)
       })
       .catch(err => {
         this.player.trigger('adscanceled');
