@@ -57,7 +57,7 @@ export default class VastPlugin extends Plugin {
 
   }
 
-  _handleVast(res, options) {
+  _handleVast(res, options) { // TODO it might be worth checking if a video companion is actually found in the VAST data.
       console.log('vast: ', res)
 
       const linearFn = creative => creative.type === 'linear';
