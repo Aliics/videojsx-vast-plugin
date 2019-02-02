@@ -47,7 +47,7 @@ export default class VastPlugin extends Plugin {
 
 
     player.on('readyforpreroll', () => {
-      if (!options.url) {
+      if (!options.url && !options.vast) { // this kept cancelling our advertisement from being played with direct VAST data.
         player.trigger('adscanceled');
         return;
       }
@@ -58,13 +58,11 @@ export default class VastPlugin extends Plugin {
   }
 
   _handleVast(res, options) {
-      console.log('handle vast')
+      console.log('vast: ', res)
 
       const linearFn = creative => creative.type === 'linear';
       const companionFn = creative => creative.type === 'companion';
-      console.log(res)
       const adWithLinear = res.ads.find(ad => ad.creatives.some(linearFn));
-
       const linearCreative = adWithLinear.creatives.find(linearFn);
       console.log("linear: ", linearCreative )
       const companionCreative = adWithLinear.creatives.find(companionFn);
@@ -97,8 +95,6 @@ export default class VastPlugin extends Plugin {
       this.sources = createSourceObjects(linearCreative.mediaFiles);
 
       this.tracker = new VASTTracker(this.vastClient, adWithLinear, linearCreative, companionCreative);
-
-      console.log(this.sources)
 
       if (this.sources.length) {
           this.player.trigger('adsready');
