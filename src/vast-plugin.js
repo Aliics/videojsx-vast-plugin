@@ -248,7 +248,10 @@ export default class VastPlugin extends Plugin {
       const MEDIAFILE_PLAYBACK_ERROR = '405';
       tracker.errorWithCode(MEDIAFILE_PLAYBACK_ERROR);
       errorOccurred = true;
-      this.eventListeners.teardown();
+      if (this.eventListeners.tearDown) {
+        this.eventListeners.teardown();
+      }
+
       // ?? player.trigger('ended');
     };
 
