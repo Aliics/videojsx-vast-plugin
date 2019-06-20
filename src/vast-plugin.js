@@ -109,6 +109,9 @@ export default class VastPlugin extends Plugin {
   _getVastContent(url) {
     const options = this.options;
     //This is doing more work than new VASTParser().parseVAST(xmlDoc).
+
+    console.log(url, options.withCredentials, options.wrapperLimit);
+
     this.vastClient.get(url, {withCredentials: options.withCredentials, wrapperLimit: options.wrapperLimit})
       .then(res => {
             this._handleVast(res, options)
