@@ -4,3 +4,4 @@
 * Handle case when video src has been changed
 * Report to server (specified in vast xml?) when no suitable file can be played?
 * Execute non-linear ad events (click, view, etc)
+* Bundle in css into artifact

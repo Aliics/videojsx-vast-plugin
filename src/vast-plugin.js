@@ -163,14 +163,8 @@ export default class VastPlugin extends Plugin {
     this.domElements.skipButton = skipButton;
     player.el().appendChild(skipButton);
 
-
     this.eventListeners.adtimeupdate = () => this._timeUpdate();
-    player.one('adplay', () => {
-      if (this.options.skip > 0 && player.duration() >= this.options.skip) {
-        skipButton.style.display = 'block';
-        player.on('adtimeupdate', this.eventListeners.adtimeupdate);
-      }
-    });
+    player.on('adtimeupdate', this.eventListeners.adtimeupdate);
 
     this.eventListeners.teardown = () => this._tearDown();
 
@@ -254,9 +248,8 @@ export default class VastPlugin extends Plugin {
       const MEDIAFILE_PLAYBACK_ERROR = '405';
       tracker.errorWithCode(MEDIAFILE_PLAYBACK_ERROR);
       errorOccurred = true;
-      // Do not want to show VAST related errors to the user
-      player.error(null);
-      player.trigger('adended');
+      this.eventListeners.teardown();
+      // ?? player.trigger('ended');
     };
 
     const fullScreenFn = function() {
